@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  nodebb:
+    image: myregistry.azurecr.io/nodebb:latest
+    restart: unless-stopped
+    ports:
+      - "4567:4567"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - nodebb-build:/usr/src/app/build
+      - nodebb-uploads:/usr/src/app/public/uploads
+      - nodebb-config:/opt/config
+      - ./install/docker/setup.json:/usr/src/app/setup.json
+    networks:
+      - mynetwork
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  redis:
+    image: myregistry.azurecr.io/redis:7.2.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--loglevel", "warning"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - mynetwork
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+volumes:
+  redis-data:
+    driver: azure_file
+    driver_opts:
+      share_name: redisdata
+      storage_account_name: mystorageaccount
+      storage_account_key: ${STORAGE_ACCOUNT_KEY}
+  nodebb-build:
+    driver: azure_file
+    driver_opts:
+      share_name: nodebbbuild
+      storage_account_name: mystorageaccount
+      storage_account_key: ${STORAGE_ACCOUNT_KEY}
+  nodebb-uploads:
+    driver: azure_file
+    driver_opts:
+      share_name: nodebbuploads
+      storage_account_name: mystorageaccount
+      storage_account_key: ${STORAGE_ACCOUNT_KEY}
+  nodebb-config:
+    driver: azure_file
+    driver_opts:
+      share_name: nodebbconfig
+      storage_account_name: mystorageaccount
+      storage_account_key: ${STORAGE_ACCOUNT_KEY}
+
+networks:
+  mynetwork:
+    driver: bridge

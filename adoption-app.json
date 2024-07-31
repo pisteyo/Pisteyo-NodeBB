@@ -1,0 +1,168 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "resources": [
+    //   {
+    //     "type": "Microsoft.Resources/resourceGroups",
+    //     "apiVersion": "2020-10-01",
+    //     "location": "[parameters('location')]",
+    //     "properties": {}
+    //   },
+      {
+        "type": "Microsoft.ContainerRegistry/registries",
+        "apiVersion": "2019-12-01-preview",
+        "name": "[parameters('acrName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "[parameters('acrSku')]"
+        },
+        "properties": {
+          "adminUserEnabled": true
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2019-06-01",
+        "name": "[parameters('storageAccountName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "Standard_LRS"
+        },
+        "kind": "StorageV2",
+        "properties": {}
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+        "apiVersion": "2019-06-01",
+        "name": "[concat(parameters('storageAccountName'), '/default/', parameters('redisShareName'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        ],
+        "properties": {
+          "shareQuota": 100
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+        "apiVersion": "2019-06-01",
+        "name": "[concat(parameters('storageAccountName'), '/default/', parameters('nodebbBuildShareName'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        ],
+        "properties": {
+          "shareQuota": 100
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+        "apiVersion": "2019-06-01",
+        "name": "[concat(parameters('storageAccountName'), '/default/', parameters('nodebbUploadsShareName'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        ],
+        "properties": {
+          "shareQuota": 100
+        }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+        "apiVersion": "2019-06-01",
+        "name": "[concat(parameters('storageAccountName'), '/default/', parameters('nodebbConfigShareName'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        ],
+        "properties": {
+          "shareQuota": 100
+        }
+      },
+      {
+        "type": "Microsoft.App/managedEnvironments",
+        "apiVersion": "2023-11-02-preview",
+        "name": "[parameters('containerAppEnvName')]",
+        "location": "[parameters('location')]",
+        "properties": {}
+      }
+    ],
+    "parameters": {
+      "location": {
+        "type": "string",
+        "defaultValue": "eastus",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },
+      "acrName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the Azure Container Registry."
+        }
+      },
+      "acrSku": {
+        "type": "string",
+        "defaultValue": "Basic",
+        "allowedValues": [
+          "Basic",
+          "Standard",
+          "Premium"
+        ],
+        "metadata": {
+          "description": "The SKU of the Azure Container Registry."
+        }
+      },
+      "storageAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the Storage Account."
+        }
+      },
+      "redisShareName": {
+        "type": "string",
+        "defaultValue": "redisdata",
+        "metadata": {
+          "description": "The name of the Redis file share."
+        }
+      },
+      "nodebbBuildShareName": {
+        "type": "string",
+        "defaultValue": "nodebbbuild",
+        "metadata": {
+          "description": "The name of the NodeBB build file share."
+        }
+      },
+      "nodebbUploadsShareName": {
+        "type": "string",
+        "defaultValue": "nodebbuploads",
+        "metadata": {
+          "description": "The name of the NodeBB uploads file share."
+        }
+      },
+      "nodebbConfigShareName": {
+        "type": "string",
+        "defaultValue": "nodebbconfig",
+        "metadata": {
+          "description": "The name of the NodeBB config file share."
+        }
+      },
+      "containerAppEnvName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the Azure Container App environment."
+        }
+      }
+    },
+    "outputs": {
+      "acrLoginServer": {
+        "type": "string",
+        "value": "[reference(parameters('acrName')).loginServer]"
+      },
+      "acrAdminUsername": {
+        "type": "string",
+        "value": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2019-12-01-preview').username]"
+      },
+      "acrAdminPassword": {
+        "type": "string",
+        "value": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName')), '2019-12-01-preview').passwords[0].value]"
+      }
+    }
+  }
+  

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   nodebb:
-    image: myregistry.azurecr.io/nodebb:latest
+    image: pisteyoacr.azurecr.io/nodebb:latest
     restart: unless-stopped
     ports:
       - "4567:4567"
@@ -22,7 +22,7 @@ services:
           - node.role == manager
 
   redis:
-    image: myregistry.azurecr.io/redis:7.2.4-alpine
+    image: pisteyoacr.azurecr.io/redis:7.2.4-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--loglevel", "warning"]
     volumes:
@@ -34,30 +34,32 @@ services:
         constraints:
           - node.role == manager
 
+# FIXME: docker isn't liking this syntax, need to figure out volume mapping in Azure
+
 volumes:
   redis-data:
     driver: azure_file
     driver_opts:
       share_name: redisdata
-      storage_account_name: mystorageaccount
+      storage_account_name: pisteyostorageaccount
       storage_account_key: ${STORAGE_ACCOUNT_KEY}
   nodebb-build:
     driver: azure_file
     driver_opts:
       share_name: nodebbbuild
-      storage_account_name: mystorageaccount
+      storage_account_name: pisteyostorageaccount
       storage_account_key: ${STORAGE_ACCOUNT_KEY}
   nodebb-uploads:
     driver: azure_file
     driver_opts:
       share_name: nodebbuploads
-      storage_account_name: mystorageaccount
+      storage_account_name: pisteyostorageaccount
       storage_account_key: ${STORAGE_ACCOUNT_KEY}
   nodebb-config:
     driver: azure_file
     driver_opts:
       share_name: nodebbconfig
-      storage_account_name: mystorageaccount
+      storage_account_name: pisteyostorageaccount
       storage_account_key: ${STORAGE_ACCOUNT_KEY}
 
 networks:

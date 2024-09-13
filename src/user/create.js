@@ -78,6 +78,10 @@ module.exports = function (User) {
 
 		await db.setObject(`user:${uid}`, userData);
 
+		// Add these new lines
+		await db.sortedSetAdd('users:postcount', 0, uid);
+		await db.sortedSetAdd('users:reputation', 0, uid);
+
 		const bulkAdd = [
 			['username:uid', userData.uid, userData.username],
 			[`user:${userData.uid}:usernames`, timestamp, `${userData.username}:${timestamp}`],

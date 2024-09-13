@@ -192,6 +192,9 @@ module.exports = function (Posts) {
 		const postData = await Posts.getPostFields(pid, ['pid', 'uid', 'tid']);
 		const newReputation = await user.incrementUserReputationBy(postData.uid, type === 'upvote' ? 1 : -1);
 
+		// Update user's total reputation in the sorted set
+		await db.sortedSetAdd('users:reputation', newReputation, postData.uid);
+
 		await adjustPostVotes(postData, uid, type, unvote);
 
 		await fireVoteHook(postData, uid, type, unvote, voteStatus);

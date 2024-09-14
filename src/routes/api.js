@@ -45,4 +45,6 @@ module.exports = function (app, middleware, controllers) {
 	], helpers.tryRoute(controllers.accounts.edit.uploadPicture));
 
 	router.get('/leaderboard', [...middlewares], helpers.tryRoute(leaderboardController.getLeaderboard));
+
+	router.get('/activity-volume', [...middlewares], helpers.tryRoute(leaderboardController.getActivityVolume));
 };

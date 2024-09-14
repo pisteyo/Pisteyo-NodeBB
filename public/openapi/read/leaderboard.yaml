@@ -1,0 +1,94 @@
+get:
+  tags:
+    - leaderboard
+  summary: Get leaderboard
+  description: Returns the leaderboard data based on the specified type (active or upvoted).
+  parameters:
+    - in: query
+      name: type
+      schema:
+        type: string
+        enum: [active, upvoted]
+      required: false
+      description: Type of leaderboard (default is 'active')
+  responses:
+    "200":
+      description: Leaderboard data
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                uid:
+                  type: number
+                username:
+                  type: string
+                userslug:
+                  type: string
+                picture:
+                  type: string
+                postcount:
+                  type: number
+                reputation:
+                  type: number
+    "400":
+      description: Invalid leaderboard type
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Invalid leaderboard type
+
+/activity-volume:
+  get:
+    tags:
+      - leaderboard
+    summary: Get activity volume
+    description: Returns the total activity volume (topics, replies, comments) for a requested period with a configurable interval.
+    parameters:
+      - in: query
+        name: start
+        schema:
+          type: string
+          format: date
+        required: true
+        description: Start date of the period (YYYY-MM-DD)
+      - in: query
+        name: end
+        schema:
+          type: string
+          format: date
+        required: true
+        description: End date of the period (YYYY-MM-DD)
+      - in: query
+        name: interval
+        schema:
+          type: integer
+          minimum: 1
+        required: true
+        description: Interval in days
+    responses:
+      "200":
+        description: Activity volume data
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                  topics:
+                    type: number
+                  posts:
+                    type: number
+                  comments:
+                    type: number
+                  total:
+                    type: number

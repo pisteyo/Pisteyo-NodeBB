@@ -1,0 +1,29 @@
+{
+    "url": "http://localhost:4567",
+    "secret": "4756a412-a3ed-4521-9094-27188a308cf8",
+    "database": "mongo",
+    "pluginBaseUrl": "http://localhost:4567",
+    "logging": {
+        "level": "verbose"
+    },
+    "mongo": {
+        "host": "127.0.0.1",
+        "port": "27017",
+        "username": "",
+        "password": "",
+        "database": "nodebb",
+        "uri": "mongodb://nodebbUser:Vipul123@localhost:27017/nodebb"
+    },
+    "oauth": {
+        "authorizationURL": "https://login.microsoftonline.com/c90739ab-31ce-4e93-9afb-f86eb9ac4a73/oauth2/v2.0/authorize",
+        "tokenURL": "https://login.microsoftonline.com/c90739ab-31ce-4e93-9afb-f86eb9ac4a73/oauth2/v2.0/token",
+        "id": "d606fcc3-136d-4924-b553-a254361f6203",
+        "secret": "cb9be2cd-58f5-4eb8-84e2-56a200c130e1",
+        "tenant": "c90739ab-31ce-4e93-9afb-f86eb9ac4a73"
+    },
+    "cors": {
+    "allowOrigin": ["http://localhost:3000"],
+    "allowCredentials": true
+    },
+    "port": "4567"
+}

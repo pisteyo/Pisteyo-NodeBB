@@ -17,17 +17,25 @@ require('./data')(Categories);
 require('./create')(Categories);
 require('./delete')(Categories);
 require('./topics')(Categories);
-require('./unread')(Categories);
 require('./activeusers')(Categories);
 require('./recentreplies')(Categories);
 require('./update')(Categories);
 require('./watch')(Categories);
 require('./search')(Categories);
 
+Categories.icons = require('./icon');
+
 Categories.exists = async function (cids) {
 	return await db.exists(
 		Array.isArray(cids) ? cids.map(cid => `category:${cid}`) : `category:${cids}`
 	);
+};
+
+Categories.existsByHandle = async function (handle) {
+	if (Array.isArray(handle)) {
+		return await db.isSortedSetMembers('categoryhandle:cid', handle);
+	}
+	return await db.isSortedSetMember('categoryhandle:cid', handle);
 };
 
 Categories.getCategoryById = async function (data) {
@@ -39,7 +47,7 @@ Categories.getCategoryById = async function (data) {
 	data.category = category;
 
 	const promises = [
-		Categories.getCategoryTopics(data),
+		data.cid !== '-1' ? Categories.getCategoryTopics(data) : [],
 		Categories.getTopicCount(data),
 		Categories.getWatchState([data.cid], data.uid),
 		getChildrenTree(category, data.uid),
@@ -67,6 +75,10 @@ Categories.getCategoryById = async function (data) {
 	return { ...result.category };
 };
 
+Categories.getCidByHandle = async function (handle) {
+	return await db.sortedSetScore('categoryhandle:cid', handle);
+};
+
 Categories.getAllCidsFromSet = async function (key) {
 	let cids = cache.get(key);
 	if (cids) {
@@ -86,6 +98,10 @@ Categories.getAllCategories = async function () {
 
 Categories.getCidsByPrivilege = async function (set, uid, privilege) {
 	const cids = await Categories.getAllCidsFromSet(set);
+	if (set === 'categories:cid') {
+		cids.unshift(-1);
+	}
+
 	return await privileges.categories.filterCids(privilege, cids, uid);
 };
 

@@ -5,9 +5,9 @@ define('topicThumbs', [
 ], function (api, bootbox, alerts, uploader, Benchpress, translator) {
 	const Thumbs = {};
 
-	Thumbs.get = id => api.get(`/topics/${id}/thumbs`, {});
+	Thumbs.get = id => api.get(`/topics/${id}/thumbs`, { thumbsOnly: 1 });
 
-	Thumbs.getByPid = pid => api.get(`/posts/${pid}`, {}).then(post => Thumbs.get(post.tid));
+	Thumbs.getByPid = pid => api.get(`/posts/${encodeURIComponent(pid)}`, {}).then(post => Thumbs.get(post.tid));
 
 	Thumbs.delete = (id, path) => api.del(`/topics/${id}/thumbs`, {
 		path: path,

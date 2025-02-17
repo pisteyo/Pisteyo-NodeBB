@@ -283,13 +283,34 @@ module.exports = function (Topics) {
 				oldCid: oldCid,
 			}),
 			Topics.updateCategoryTagsCount([oldCid, cid], tags),
-			Topics.events.log(tid, { type: 'move', uid: data.uid, fromCid: oldCid }),
+			oldCid !== -1 ?
+				Topics.events.log(tid, { type: 'move', uid: data.uid, fromCid: oldCid }) :
+				topicTools.share(tid, data.uid),
 		]);
+
+		// Update entry in recent topics zset — must come after hash update
+		if (oldCid === -1 || cid === -1) {
+			Topics.updateRecent(tid, topicData.lastposttime); // no await req'd
+		}
+
 		const hookData = _.clone(data);
 		hookData.fromCid = oldCid;
 		hookData.toCid = cid;
 		hookData.tid = tid;
 
 		plugins.hooks.fire('action:topic.move', hookData);
+	};
+
+	topicTools.share = async function (tid, uid, timestamp = Date.now()) {
+		const set = `uid:${uid}:shares`;
+		const shared = await db.isSortedSetMember(set, tid);
+		if (shared) {
+			return;
+		}
+
+		await Promise.all([
+			Topics.events.log(tid, { type: 'share', uid: uid }),
+			db.sortedSetAdd(set, timestamp, tid),
+		]);
 	};
 };

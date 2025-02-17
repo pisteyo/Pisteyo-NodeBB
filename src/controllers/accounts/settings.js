@@ -113,17 +113,26 @@ const doUnsubscribe = async (payload) => {
 			user.updateDigestSetting(payload.uid, 'off'),
 		]);
 	} else if (payload.template === 'notification') {
+		const currentToNewSetting = {
+			notificationemail: 'notification',
+			email: 'none',
+		};
 		const current = await db.getObjectField(`user:${payload.uid}:settings`, `notificationType_${payload.type}`);
-		await user.setSetting(payload.uid, `notificationType_${payload.type}`, (current === 'notificationemail' ? 'notification' : 'none'));
+		if (currentToNewSetting.hasOwnProperty(current)) {
+			await user.setSetting(payload.uid, `notificationType_${payload.type}`, currentToNewSetting[current]);
+		}
 	}
 	return true;
 };
 
-settingsController.unsubscribe = async (req, res) => {
+settingsController.unsubscribe = async (req, res, next) => {
+	if (req.method === 'HEAD') {
+		return res.sendStatus(204);
+	}
 	try {
 		const payload = await jwtVerifyAsync(req.params.token);
 		if (!payload || !unsubscribable.includes(payload.template)) {
-			return;
+			return next();
 		}
 		await doUnsubscribe(payload);
 		res.render('unsubscribe', {

@@ -6,12 +6,14 @@ const validator = require('validator');
 const meta = require('../meta');
 const user = require('../user');
 const plugins = require('../plugins');
-const privileges = require('../privileges');
+const privilegesHelpers = require('../privileges/helpers');
 const helpers = require('./helpers');
 
 const Controllers = module.exports;
 
 Controllers.ping = require('./ping');
+Controllers['well-known'] = require('./well-known');
+Controllers.activitypub = require('./activitypub');
 Controllers.home = require('./home');
 Controllers.topics = require('./topics');
 Controllers.posts = require('./posts');
@@ -124,7 +126,8 @@ Controllers.login = async function (req, res) {
 	data.title = '[[pages:login]]';
 	data.allowPasswordReset = !meta.config['password:disableEdit'];
 
-	const hasLoginPrivilege = await privileges.global.canGroup('local:login', 'registered-users');
+	const loginPrivileges = await privilegesHelpers.getGroupPrivileges(0, ['groups:local:login']);
+	const hasLoginPrivilege = !!loginPrivileges.find(privilege => privilege.privileges['groups:local:login']);
 	data.allowLocalLogin = hasLoginPrivilege || parseInt(req.query.local, 10) === 1;
 
 	if (!data.allowLocalLogin && !data.allowRegistration && data.alternate_logins && data.authentication.length === 1) {
@@ -226,6 +229,10 @@ Controllers.confirmEmail = async (req, res) => {
 			title: '[[pages:confirm]]',
 			...opts,
 		});
+	}
+
+	if (req.method === 'HEAD') {
+		return renderPage();
 	}
 	try {
 		if (req.loggedIn) {

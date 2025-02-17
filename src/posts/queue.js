@@ -57,13 +57,13 @@ module.exports = function (Posts) {
 		}
 
 		// Filter by tid if present
-		if (utils.isNumber(filter.tid)) {
-			const tid = parseInt(filter.tid, 10);
-			postData = postData.filter(item => item.data.tid && parseInt(item.data.tid, 10) === tid);
+		if (filter.tid) {
+			const tid = String(filter.tid);
+			postData = postData.filter(item => item.data.tid && String(item.data.tid) === tid);
 		} else if (Array.isArray(filter.tid)) {
-			const tids = filter.tid.map(tid => parseInt(tid, 10));
+			const tids = filter.tid.map(String);
 			postData = postData.filter(
-				item => item.data.tid && tids.includes(parseInt(item.data.tid, 10))
+				item => item.data.tid && tids.includes(String(item.data.tid))
 			);
 		}
 

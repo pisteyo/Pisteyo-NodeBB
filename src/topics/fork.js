@@ -24,7 +24,14 @@ module.exports = function (Topics) {
 			throw new Error('[[error:invalid-pid]]');
 		}
 
-		pids.sort((a, b) => a - b);
+		if (pids.every(isFinite)) {
+			pids.sort((a, b) => a - b);
+		} else {
+			const pidsDatetime = (await db.sortedSetScores(`tid:${fromTid}:posts`, pids)).map(t => t || 0);
+			const map = pids.reduce((map, pid, idx) => map.set(pidsDatetime[idx], pid), new Map());
+			pidsDatetime.sort((a, b) => a - b);
+			pids = pidsDatetime.map(key => map.get(key));
+		}
 
 		const mainPid = pids[0];
 		if (!cid) {
@@ -84,7 +91,7 @@ module.exports = function (Topics) {
 	};
 
 	Topics.movePostToTopic = async function (callerUid, pid, tid, forceScheduled = false) {
-		tid = parseInt(tid, 10);
+		tid = String(tid);
 		const topicData = await Topics.getTopicFields(tid, ['tid', 'scheduled']);
 		if (!topicData.tid) {
 			throw new Error('[[error:no-topic]]');
@@ -102,7 +109,7 @@ module.exports = function (Topics) {
 			throw new Error('[[error:cant-move-from-scheduled-to-existing]]');
 		}
 
-		if (postData.tid === tid) {
+		if (String(postData.tid) === String(tid)) {
 			throw new Error('[[error:cant-move-to-same-topic]]');
 		}
 

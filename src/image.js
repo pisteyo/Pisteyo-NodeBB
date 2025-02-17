@@ -103,7 +103,7 @@ image.size = async function (path) {
 };
 
 image.stripEXIF = async function (path) {
-	if (!meta.config.stripEXIFData || path.endsWith('.svg')) {
+	if (!meta.config.stripEXIFData || path.endsWith('.gif') || path.endsWith('.svg')) {
 		return;
 	}
 	try {
@@ -122,7 +122,6 @@ image.stripEXIF = async function (path) {
 };
 
 image.checkDimensions = async function (path) {
-	const meta = require('./meta');
 	const result = await image.size(path);
 
 	if (result.width > meta.config.rejectImageWidth || result.height > meta.config.rejectImageHeight) {

@@ -31,7 +31,6 @@ describe('Controllers', () => {
 	let fooUid;
 	let adminUid;
 	let category;
-	let testRoutes = [];
 
 	before(async () => {
 		category = await categories.create({
@@ -56,48 +55,6 @@ describe('Controllers', () => {
 		tid = result.topicData.tid;
 
 		pid = result.postData.pid;
-
-		testRoutes = [
-			{ it: 'should load /reset without code', url: '/reset' },
-			{ it: 'should load /reset with invalid code', url: '/reset/123123' },
-			{ it: 'should load /login', url: '/login' },
-			{ it: 'should load /register', url: '/register' },
-			{ it: 'should load /robots.txt', url: '/robots.txt' },
-			{ it: 'should load /manifest.webmanifest', url: '/manifest.webmanifest' },
-			{ it: 'should load /outgoing?url=<url>', url: '/outgoing?url=http://youtube.com' },
-			{ it: 'should 404 on /outgoing with no url', url: '/outgoing', status: 404 },
-			{ it: 'should 404 on /outgoing with javascript: protocol', url: '/outgoing?url=javascript:alert(1);', status: 404 },
-			{ it: 'should 404 on /outgoing with invalid url', url: '/outgoing?url=derp', status: 404 },
-			{ it: 'should load /sping', url: '/sping', body: 'healthy' },
-			{ it: 'should load /ping', url: '/ping', body: '200' },
-			{ it: 'should handle 404', url: '/arouteinthevoid', status: 404 },
-			{ it: 'should load topic rss feed', url: `/topic/${tid}.rss` },
-			{ it: 'should load category rss feed', url: `/category/${cid}.rss` },
-			{ it: 'should load topics rss feed', url: `/topics.rss` },
-			{ it: 'should load recent rss feed', url: `/recent.rss` },
-			{ it: 'should load top rss feed', url: `/top.rss` },
-			{ it: 'should load popular rss feed', url: `/popular.rss` },
-			{ it: 'should load popular rss feed with term', url: `/popular/day.rss` },
-			{ it: 'should load recent posts rss feed', url: `/recentposts.rss` },
-			{ it: 'should load category recent posts rss feed', url: `/category/${cid}/recentposts.rss` },
-			{ it: 'should load user topics rss feed', url: `/user/foo/topics.rss` },
-			{ it: 'should load tag rss feed', url: `/tags/nodebb.rss` },
-			{ it: 'should load client.css', url: `/assets/client.css` },
-			{ it: 'should load admin.css', url: `/assets/admin.css` },
-			{ it: 'should load sitemap.xml', url: `/sitemap.xml` },
-			{ it: 'should load sitemap/pages.xml', url: `/sitemap/pages.xml` },
-			{ it: 'should load sitemap/categories.xml', url: `/sitemap/categories.xml` },
-			{ it: 'should load sitemap/topics.1.xml', url: `/sitemap/topics.1.xml` },
-			{ it: 'should load theme screenshot', url: `/css/previews/nodebb-theme-harmony` },
-			{ it: 'should load users page', url: `/users` },
-			{ it: 'should load users page section', url: `/users?section=online` },
-			{ it: 'should load groups page', url: `/groups` },
-			{ it: 'should get recent posts', url: `/api/recent/posts/month` },
-			{ it: 'should get post data', url: `/api/v3/posts/${pid}` },
-			{ it: 'should get topic data', url: `/api/v3/topics/${tid}` },
-			{ it: 'should get category data', url: `/api/v3/categories/${cid}` },
-			{ it: 'should return osd data', url: `/osd.xml` },
-		];
 	});
 
 	it('should load /config with csrf_token', async () => {
@@ -222,6 +179,48 @@ describe('Controllers', () => {
 
 	describe('routes that should 200/404 etc.', () => {
 		const baseUrl = nconf.get('url');
+		const testRoutes = [
+			{ it: 'should load /reset without code', url: '/reset' },
+			{ it: 'should load /reset with invalid code', url: '/reset/123123' },
+			{ it: 'should load /login', url: '/login' },
+			{ it: 'should load /register', url: '/register' },
+			{ it: 'should load /robots.txt', url: '/robots.txt' },
+			{ it: 'should load /manifest.webmanifest', url: '/manifest.webmanifest' },
+			{ it: 'should load /outgoing?url=<url>', url: '/outgoing?url=http://youtube.com' },
+			{ it: 'should 404 on /outgoing with no url', url: '/outgoing', status: 404 },
+			{ it: 'should 404 on /outgoing with javascript: protocol', url: '/outgoing?url=javascript:alert(1);', status: 404 },
+			{ it: 'should 404 on /outgoing with invalid url', url: '/outgoing?url=derp', status: 404 },
+			{ it: 'should load /sping', url: '/sping', body: 'healthy' },
+			{ it: 'should load /ping', url: '/ping', body: '200' },
+			{ it: 'should handle 404', url: '/arouteinthevoid', status: 404 },
+			{ it: 'should load topic rss feed', url: `/topic/1.rss` },
+			{ it: 'should load category rss feed', url: `/category/1.rss` },
+			{ it: 'should load topics rss feed', url: `/topics.rss` },
+			{ it: 'should load recent rss feed', url: `/recent.rss` },
+			{ it: 'should load top rss feed', url: `/top.rss` },
+			{ it: 'should load popular rss feed', url: `/popular.rss` },
+			{ it: 'should load popular rss feed with term', url: `/popular/day.rss` },
+			{ it: 'should load recent posts rss feed', url: `/recentposts.rss` },
+			{ it: 'should load category recent posts rss feed', url: `/category/1/recentposts.rss` },
+			{ it: 'should load user topics rss feed', url: `/user/foo/topics.rss` },
+			{ it: 'should load tag rss feed', url: `/tags/nodebb.rss` },
+			{ it: 'should load client.css', url: `/assets/client.css` },
+			{ it: 'should load admin.css', url: `/assets/admin.css` },
+			{ it: 'should load sitemap.xml', url: `/sitemap.xml` },
+			{ it: 'should load sitemap/pages.xml', url: `/sitemap/pages.xml` },
+			{ it: 'should load sitemap/categories.xml', url: `/sitemap/categories.xml` },
+			{ it: 'should load sitemap/topics.1.xml', url: `/sitemap/topics.1.xml` },
+			{ it: 'should load theme screenshot', url: `/css/previews/nodebb-theme-harmony` },
+			{ it: 'should load users page', url: `/users` },
+			{ it: 'should load users page section', url: `/users?section=online` },
+			{ it: 'should load groups page', url: `/groups` },
+			{ it: 'should get recent posts', url: `/api/recent/posts/month` },
+			{ it: 'should get post data', url: `/api/v3/posts/1` },
+			{ it: 'should get topic data', url: `/api/v3/topics/1` },
+			{ it: 'should get category data', url: `/api/v3/categories/1` },
+			{ it: 'should return osd data', url: `/osd.xml` },
+			{ it: 'should load service worker', url: '/service-worker.js' },
+		];
 		testRoutes.forEach((route) => {
 			it(route.it, async () => {
 				const { response, body } = await request.get(`${baseUrl}/${route.url}`);
@@ -943,7 +942,7 @@ describe('Controllers', () => {
 		it('should redirect to account page with logged in user', async () => {
 			const { response, body } = await request.get(`${nconf.get('url')}/api/login`, { jar });
 			assert.equal(response.statusCode, 200);
-			assert.equal(response.headers['x-redirect'], '/user/foo');
+			assert.equal(response.headers['x-redirect'], encodeURIComponent('/user/foo'));
 			assert.equal(body, '/user/foo');
 		});
 
@@ -955,14 +954,14 @@ describe('Controllers', () => {
 		it('should redirect to userslug', async () => {
 			const { response, body } = await request.get(`${nconf.get('url')}/api/uid/${fooUid}`);
 			assert.equal(response.statusCode, 200);
-			assert.equal(response.headers['x-redirect'], '/user/foo');
+			assert.equal(response.headers['x-redirect'], encodeURIComponent('/user/foo'));
 			assert.equal(body, '/user/foo');
 		});
 
 		it('should redirect to userslug and keep query params', async () => {
 			const { response, body } = await request.get(`${nconf.get('url')}/api/uid/${fooUid}/topics?foo=bar`);
 			assert.equal(response.statusCode, 200);
-			assert.equal(response.headers['x-redirect'], '/user/foo/topics?foo=bar');
+			assert.equal(response.headers['x-redirect'], encodeURIComponent('/user/foo/topics?foo=bar'));
 			assert.equal(body, '/user/foo/topics?foo=bar');
 		});
 
@@ -982,14 +981,14 @@ describe('Controllers', () => {
 			it('api should redirect to /user/[userslug]/bookmarks', async () => {
 				const { response, body } = await request.get(`${nconf.get('url')}/api/me/bookmarks`, { jar });
 				assert.equal(response.statusCode, 200);
-				assert.equal(response.headers['x-redirect'], '/user/foo/bookmarks');
+				assert.equal(response.headers['x-redirect'], encodeURIComponent('/user/foo/bookmarks'));
 				assert.equal(body, '/user/foo/bookmarks');
 			});
 
 			it('api should redirect to /user/[userslug]/edit/username', async () => {
 				const { response, body } = await request.get(`${nconf.get('url')}/api/me/edit/username`, { jar });
 				assert.equal(response.statusCode, 200);
-				assert.equal(response.headers['x-redirect'], '/user/foo/edit/username');
+				assert.equal(response.headers['x-redirect'], encodeURIComponent('/user/foo/edit/username'));
 				assert.equal(body, '/user/foo/edit/username');
 			});
 
@@ -1388,7 +1387,7 @@ describe('Controllers', () => {
 		it('should return correct post path', async () => {
 			const { response, body } = await request.get(`${nconf.get('url')}/api/post/${pid}`);
 			assert.equal(response.statusCode, 200);
-			assert.equal(response.headers['x-redirect'], '/topic/1/test-topic-title');
+			assert.equal(response.headers['x-redirect'], encodeURIComponent('/topic/1/test-topic-title'));
 			assert.equal(body, '/topic/1/test-topic-title');
 		});
 	});
@@ -1501,7 +1500,7 @@ describe('Controllers', () => {
 			});
 			const { response, body } = await request.get(`${nconf.get('url')}/api/users`);
 			assert.equal(response.statusCode, 200);
-			assert.equal(response.headers['x-redirect'], '/api/popular');
+			assert.equal(response.headers['x-redirect'], encodeURIComponent('/api/popular'));
 			assert(body, '/api/popular');
 		});
 
@@ -1606,12 +1605,12 @@ describe('Controllers', () => {
 			const { cid } = category;
 
 			let result = await request.get(`${nconf.get('url')}/api/category/${category.slug}`, { jar });
-			assert.equal(result.response.headers['x-redirect'], 'https://nodebb.org');
+			assert.equal(result.response.headers['x-redirect'], encodeURIComponent('https://nodebb.org'));
 			assert.equal(result.body, 'https://nodebb.org');
 			await categories.setCategoryField(cid, 'link', '/recent');
 
 			result = await request.get(`${nconf.get('url')}/api/category/${category.slug}`, { jar });
-			assert.equal(result.response.headers['x-redirect'], '/recent');
+			assert.equal(result.response.headers['x-redirect'], encodeURIComponent('/recent'));
 			assert.equal(result.body, '/recent');
 		});
 
@@ -1687,7 +1686,7 @@ describe('Controllers', () => {
 		it('should redirect if page is out of bounds', async () => {
 			const { response, body } = await request.get(`${nconf.get('url')}/api/unread?page=-1`, { jar });
 			assert.equal(response.statusCode, 200);
-			assert.equal(response.headers['x-redirect'], '/unread?page=1');
+			assert.equal(response.headers['x-redirect'], encodeURIComponent('/unread?page=1'));
 			assert.equal(body, '/unread?page=1');
 		});
 	});
@@ -1892,6 +1891,49 @@ describe('Controllers', () => {
 				assert(body);
 			});
 		}
+	});
+
+	describe('.well-known', () => {
+		describe('webfinger', () => {
+			let uid;
+			let username;
+
+			before(async () => {
+				username = utils.generateUUID().slice(0, 10);
+				uid = await user.create({ username });
+			});
+
+			it('should error if resource parameter is missing', async () => {
+				const { response } = await request.get(`${nconf.get('url')}/.well-known/webfinger`);
+				assert.strictEqual(response.statusCode, 400);
+			});
+
+			it('should error if resource parameter is malformed', async () => {
+				const { response } = await request.get(`${nconf.get('url')}/.well-known/webfinger?resource=foobar`);
+				assert.strictEqual(response.statusCode, 400);
+			});
+
+			it('should deny access if view:users privilege is not enabled for guests', async () => {
+				await privileges.global.rescind(['groups:view:users'], 'fediverse');
+
+				const { response } = await request.get(`${nconf.get('url')}/.well-known/webfinger?resource=acct:${username}@${nconf.get('url_parsed').host}`);
+				assert.strictEqual(response.statusCode, 404);
+
+				await privileges.global.give(['groups:view:users'], 'fediverse');
+			});
+
+			it('should respond appropriately if the user requested does not exist locally', async () => {
+				const { response } = await request.get(`${nconf.get('url')}/.well-known/webfinger?resource=acct:foobar@${nconf.get('url_parsed').host}`);
+				assert.strictEqual(response.statusCode, 404);
+			});
+
+			it('should return a valid webfinger response if the user exists', async () => {
+				const { response, body } = await request.get(`${nconf.get('url')}/.well-known/webfinger?resource=acct:${username}@${nconf.get('url_parsed').host}`);
+				assert.strictEqual(response.statusCode, 200);
+				assert(['subject', 'aliases', 'links'].every(prop => body.hasOwnProperty(prop)));
+				assert(body.subject, `acct:${username}@${nconf.get('url_parsed').host}`);
+			});
+		});
 	});
 
 	after((done) => {

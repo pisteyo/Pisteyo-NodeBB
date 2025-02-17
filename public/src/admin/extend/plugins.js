@@ -11,27 +11,17 @@ define('admin/extend/plugins', [
 	const Plugins = {};
 	Plugins.init = function () {
 		const pluginsList = $('.plugins');
-		const numPlugins = pluginsList[0].querySelectorAll('li').length;
 		let pluginID;
-
-		if (!numPlugins) {
-			translator.translate('<li><p><i>[[admin/extend/plugins:none-found]]</i></p></li>', function (html) {
-				pluginsList.append(html);
-			});
-			return;
-		}
 
 		if (window.location.hash) {
 			$(`.nav-pills button[data-bs-target="${window.location.hash}"]`).trigger('click');
 		}
 
-		const searchInputEl = document.querySelector('#plugin-search');
-		searchInputEl.value = '';
+		const searchInputEl = $('#plugin-search');
 
 		pluginsList.on('click', 'button[data-action="toggleActive"]', function () {
 			const pluginEl = $(this).parents('li');
 			pluginID = pluginEl.attr('data-plugin-id');
-			// const btn = $('[id="' + pluginID + '"] [data-action="toggleActive"]');
 			const btn = $(this);
 
 			const pluginData = ajaxify.data.installed[pluginEl.attr('data-plugin-index')];
@@ -146,11 +136,13 @@ define('admin/extend/plugins', [
 
 				require(['compare-versions'], function (compareVersions) {
 					const currentVersion = parent.find('.currentVersion').text();
-					if (payload.version !== 'latest' && compareVersions.compare(payload.version, currentVersion, '>')) {
+					if (payload.version && payload.version !== 'latest' && compareVersions.compare(payload.version, currentVersion, '>')) {
 						upgrade(pluginID, btn, payload.version);
-					} else if (payload.version === 'latest') {
-						confirmInstall(pluginID, function () {
-							upgrade(pluginID, btn, payload.version);
+					} else if (payload.version === 'latest' || payload.version === null) {
+						confirmInstall(pluginID, function (confirm) {
+							if (confirm) {
+								upgrade(pluginID, btn, payload.version);
+							}
 						});
 					} else {
 						bootbox.alert(translator.compile('admin/extend/plugins:alert.incompatible', app.config.version, payload.version));
@@ -159,12 +151,17 @@ define('admin/extend/plugins', [
 			});
 		});
 
-		$(searchInputEl).on('input propertychange', function () {
+		$(searchInputEl).on('input propertychange', utils.debounce(function () {
 			const term = $(this).val();
 			$('.plugins li').each(function () {
 				const pluginId = $(this).attr('data-plugin-id');
-				$(this).toggleClass('hide', pluginId && pluginId.indexOf(term) === -1);
+				$(this).toggleClass('hide', pluginId && !pluginId.includes(term));
 			});
+
+			const activeTab = $('#plugin-tabs [data-bs-target].active').attr('data-bs-target');
+			if (activeTab === '#download') {
+				searchAllPlugins(term);
+			}
 
 			const tabEls = document.querySelectorAll('.plugins .tab-pane');
 			tabEls.forEach((tabEl) => {
@@ -174,7 +171,7 @@ define('admin/extend/plugins', [
 					noticeEl.classList.toggle('hide', remaining !== 0);
 				}
 			});
-		});
+		}, 250));
 
 		$('#plugin-submit-usage').on('click', function () {
 			socket.emit('admin.config.setMultiple', {
@@ -256,10 +253,15 @@ define('admin/extend/plugins', [
 				});
 			});
 		});
-
-		populateUpgradeablePlugins();
-		populateActivePlugins();
 	};
+
+	async function searchAllPlugins(term) {
+		const { download, incompatible } = ajaxify.data;
+		const all = term ? download.concat(incompatible) : download;
+		const found = all.filter(p => p && p.name.includes(term)).slice(0, 100);
+		const html = await app.parseAndTranslate('admin/extend/plugins', 'download', { download: found });
+		$('#download ul').html(html);
+	}
 
 	function confirmInstall(pluginID, callback) {
 		bootbox.confirm(translator.compile('admin/extend/plugins:alert.possibly-incompatible', pluginID), function (confirm) {
@@ -347,24 +349,6 @@ define('admin/extend/plugins', [
 			callback(undefined, payload);
 		}).fail(callback);
 	};
-
-	function populateUpgradeablePlugins() {
-		$('#installed ul li').each(function () {
-			if ($(this).find('[data-action="upgrade"]').length) {
-				$('#upgrade ul').append($(this).clone(true));
-			}
-		});
-	}
-
-	function populateActivePlugins() {
-		$('#installed ul li').each(function () {
-			if ($(this).hasClass('active')) {
-				$('#active ul').append($(this).clone(true));
-			} else {
-				$('#deactive ul').append($(this).clone(true));
-			}
-		});
-	}
 
 	return Plugins;
 });

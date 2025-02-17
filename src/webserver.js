@@ -69,11 +69,16 @@ server.on('connection', (conn) => {
 	});
 });
 
-exports.destroy = function (callback) {
-	server.close(callback);
-	for (const connection of Object.values(connections)) {
-		connection.destroy();
-	}
+exports.destroy = function () {
+	return new Promise((resolve, reject) => {
+		server.close((err) => {
+			if (err) reject(err);
+			else resolve();
+		});
+		for (const connection of Object.values(connections)) {
+			connection.destroy();
+		}
+	});
 };
 
 exports.getConnectionCount = function () {
@@ -232,7 +237,13 @@ function configureBodyParser(app) {
 	}
 	app.use(bodyParser.urlencoded(urlencodedOpts));
 
-	const jsonOpts = nconf.get('bodyParser:json') || {};
+	const jsonOpts = nconf.get('bodyParser:json') || {
+		type: [
+			'application/json',
+			'application/ld+json',
+			'application/activity+json',
+		],
+	};
 	app.use(bodyParser.json(jsonOpts));
 }
 

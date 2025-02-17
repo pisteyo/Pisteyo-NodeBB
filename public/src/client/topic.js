@@ -24,7 +24,7 @@ define('forum/topic', [
 	bootbox, clipboard
 ) {
 	const Topic = {};
-	let tid = 0;
+	let tid = '0';
 	let currentUrl = '';
 
 	$(window).on('action:ajaxify.start', function (ev, data) {
@@ -38,8 +38,8 @@ define('forum/topic', [
 	});
 
 	Topic.init = async function () {
-		const tidChanged = !tid || parseInt(tid, 10) !== parseInt(ajaxify.data.tid, 10);
-		tid = ajaxify.data.tid;
+		const tidChanged = tid === '0' || String(tid) !== String(ajaxify.data.tid);
+		tid = String(ajaxify.data.tid);
 		currentUrl = ajaxify.currentPage;
 		hooks.fire('action:topic.loading');
 
@@ -181,6 +181,7 @@ define('forum/topic', [
 			const clickedThumb = e.target.closest('a');
 			if (clickedThumb) {
 				const clickedThumbIndex = Array.from(clickedThumb.parentNode.children).indexOf(clickedThumb);
+				e.stopPropagation();
 				e.preventDefault();
 				const thumbs = ajaxify.data.thumbs.map(t => ({ ...t }));
 				thumbs.forEach((t, i) => {
@@ -263,15 +264,32 @@ define('forum/topic', [
 	}
 
 	function addParentHandler() {
-		components.get('topic').on('click', '[component="post/parent"]', function (e) {
-			const toPid = $(this).attr('data-topid');
-
+		function gotoPost(event, toPid) {
 			const toPost = $('[component="topic"]>[component="post"][data-pid="' + toPid + '"]');
 			if (toPost.length) {
-				e.preventDefault();
+				event.preventDefault();
 				navigator.scrollToIndex(toPost.attr('data-index'), true);
 				return false;
 			}
+		}
+		components.get('topic').on('click', '[component="post/parent"]', function (e) {
+			const parentEl = $(this);
+			const contentEl = parentEl.find('[component="post/parent/content"]');
+			if (contentEl.length) {
+				const isCollapsed = contentEl.hasClass('line-clamp-1');
+				contentEl.toggleClass('line-clamp-1');
+				parentEl.find('.timeago').toggleClass('hidden');
+				parentEl.toggleClass('flex-column').toggleClass('flex-row');
+				if (isCollapsed) {
+					return false;
+				}
+			} else {
+				return gotoPost(e, parentEl.attr('data-topid'));
+			}
+		});
+
+		components.get('topic').on('click', '[component="post/parent"] .timeago', function (e) {
+			return gotoPost(e, $(this).parents('[data-parent-pid]').attr('data-parent-pid'));
 		});
 	}
 
@@ -297,12 +315,12 @@ define('forum/topic', [
 			destroyed = true;
 		}
 		$(window).one('action:ajaxify.start', destroyTooltip);
-		$('[component="topic"]').on('mouseenter', '[component="post/parent"], [component="post/content"] a, [component="topic/event"] a', async function () {
+		$('[component="topic"]').on('mouseenter', 'a[component="post/parent"], [component="post/content"] a, [component="topic/event"] a', async function () {
 			const link = $(this);
 			destroyed = false;
 
 			async function renderPost(pid) {
-				const postData = postCache[pid] || await api.get(`/posts/${pid}/summary`);
+				const postData = postCache[pid] || await api.get(`/posts/${encodeURIComponent(pid)}/summary`);
 				$('#post-tooltip').remove();
 				if (postData && ajaxify.data.template.topic) {
 					postCache[pid] = postData;
@@ -329,11 +347,11 @@ define('forum/topic', [
 			const pathname = location.pathname;
 			const validHref = href && href !== '#' && window.location.hostname === location.hostname;
 			$('#post-tooltip').remove();
-			const postMatch = validHref && pathname && pathname.match(/\/post\/([\d]+)/);
-			const topicMatch = validHref && pathname && pathname.match(/\/topic\/([\d]+)/);
+			const postMatch = validHref && pathname && pathname.match(/\/post\/([\d]+|(?:[\w_.~!$&'()*+,;=:@-]|%[\dA-F]{2})+)/);
+			const topicMatch = validHref && pathname && pathname.match(/\/topic\/([\da-z-]+)/);
 			if (postMatch) {
 				const pid = postMatch[1];
-				if (parseInt(link.parents('[component="post"]').attr('data-pid'), 10) === parseInt(pid, 10)) {
+				if (encodeURIComponent(link.parents('[component="post"]').attr('data-pid')) === encodeURIComponent(pid)) {
 					return; // dont render self post
 				}
 

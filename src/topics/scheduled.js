@@ -11,13 +11,20 @@ const topics = require('./index');
 const categories = require('../categories');
 const groups = require('../groups');
 const user = require('../user');
+const api = require('../api');
 const plugins = require('../plugins');
 
 const Scheduled = module.exports;
 
 Scheduled.startJobs = function () {
 	winston.verbose('[scheduled topics] Starting jobs.');
-	new CronJob('*/1 * * * *', Scheduled.handleExpired, null, true);
+	new CronJob('*/1 * * * *', async () => {
+		try {
+			await Scheduled.handleExpired();
+		} catch (err) {
+			winston.error(err.stack);
+		}
+	}, null, true);
 };
 
 Scheduled.handleExpired = async function () {
@@ -49,6 +56,7 @@ async function postTids(tids) {
 		sendNotifications(uids, topicsData),
 		updateUserLastposttimes(uids, topicsData),
 		updateGroupPosts(topicsData),
+		federatePosts(uids, topicsData),
 		...topicsData.map(topicData => unpin(topicData.tid, topicData)),
 	));
 }
@@ -161,6 +169,14 @@ async function updateGroupPosts(topicsData) {
 			await groups.onNewPostMade(post);
 		}
 	}));
+}
+
+function federatePosts(uids, topicData) {
+	topicData.forEach(({ mainPid: pid }, idx) => {
+		const uid = uids[idx];
+
+		api.activitypub.create.note({ uid }, { pid });
+	});
 }
 
 async function shiftPostTimes(tid, timestamp) {

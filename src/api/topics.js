@@ -11,6 +11,7 @@ const privileges = require('../privileges');
 const events = require('../events');
 const batch = require('../batch');
 
+const activitypubApi = require('./activitypub');
 const apiHelpers = require('./helpers');
 
 const { doTopicAction } = apiHelpers;
@@ -59,6 +60,7 @@ topicsAPI.create = async function (caller, data) {
 	}
 
 	const payload = { ...data };
+	delete payload.tid;
 	payload.tags = payload.tags || [];
 	apiHelpers.setDefaultPostData(caller, payload);
 	const isScheduling = parseInt(data.timestamp, 10) > payload.timestamp;
@@ -83,6 +85,12 @@ topicsAPI.create = async function (caller, data) {
 	socketHelpers.emitToUids('event:new_topic', result.topicData, [caller.uid]);
 	socketHelpers.notifyNew(caller.uid, 'newTopic', { posts: [result.postData], topic: result.topicData });
 
+	if (!isScheduling) {
+		setTimeout(() => {
+			activitypubApi.create.note(caller, { pid: result.postData.pid });
+		}, 5000);
+	}
+
 	return result.topicData;
 };
 
@@ -91,6 +99,7 @@ topicsAPI.reply = async function (caller, data) {
 		throw new Error('[[error:invalid-data]]');
 	}
 	const payload = { ...data };
+	delete payload.pid;
 	apiHelpers.setDefaultPostData(caller, payload);
 
 	await meta.blacklist.test(caller.ip);
@@ -99,8 +108,7 @@ topicsAPI.reply = async function (caller, data) {
 		return await posts.addToQueue(payload);
 	}
 
-	const postData = await topics.reply(payload); // postData seems to be a subset of postObj, refactor?
-	const postObj = await posts.getPostSummaryByPids([postData.pid], caller.uid, {});
+	const postData = await topics.reply(payload);
 
 	const result = {
 		posts: [postData],
@@ -116,8 +124,9 @@ topicsAPI.reply = async function (caller, data) {
 	}
 
 	socketHelpers.notifyNew(caller.uid, 'newPost', result);
+	activitypubApi.create.note(caller, { post: postData });
 
-	return postObj[0];
+	return postData;
 };
 
 topicsAPI.delete = async function (caller, data) {
@@ -208,7 +217,7 @@ topicsAPI.deleteTags = async (caller, { tid }) => {
 	await topics.deleteTopicTags(tid);
 };
 
-topicsAPI.getThumbs = async (caller, { tid }) => {
+topicsAPI.getThumbs = async (caller, { tid, thumbsOnly }) => {
 	if (isFinite(tid)) { // post_uuids can be passed in occasionally, in that case no checks are necessary
 		const [exists, canRead] = await Promise.all([
 			topics.exists(tid),
@@ -222,7 +231,7 @@ topicsAPI.getThumbs = async (caller, { tid }) => {
 		}
 	}
 
-	return await topics.thumbs.get(tid);
+	return await topics.thumbs.get(tid, { thumbsOnly });
 };
 
 // topicsAPI.addThumb
@@ -331,6 +340,7 @@ topicsAPI.move = async (caller, { tid, cid }) => {
 			socketHelpers.emitToUids('event:topic_moved', topicData, notifyUids);
 			if (!topicData.deleted) {
 				socketHelpers.sendNotificationToTopicOwner(tid, caller.uid, 'move', 'notifications:moved-your-topic');
+				activitypubApi.announce.note(caller, { tid });
 			}
 
 			await events.log({

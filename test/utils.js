@@ -102,13 +102,26 @@ describe('Utility Methods', () => {
 		});
 	});
 
-	describe('UUID generation', () => {
+	describe('UUID generation / secureRandom', () => {
 		it('return unique random value every time', () => {
 			delete require.cache[require.resolve('../src/utils')];
 			const { generateUUID } = require('../src/utils');
 			const uuid1 = generateUUID();
 			const uuid2 = generateUUID();
 			assert.notEqual(uuid1, uuid2, 'matches');
+		});
+
+		it('should return a random number between 1-10 inclusive', () => {
+			const { secureRandom } = require('../src/utils');
+			const r1 = secureRandom(1, 10);
+			assert(r1 >= 1);
+			assert(r1 <= 10);
+		});
+
+		it('should always return 3', () => {
+			const { secureRandom } = require('../src/utils');
+			const r1 = secureRandom(3, 3);
+			assert.strictEqual(r1, 3);
 		});
 	});
 
@@ -186,10 +199,9 @@ describe('Utility Methods', () => {
 		utils.assertPasswordValidity('Yzsh31j!a', zxcvbn);
 	});
 
-	// it('should generate UUID', () => {
-	// TODO: add back when nodejs 18 is minimum
-	// assert(validator.isUUID(utils.generateUUID()));
-	// });
+	it('should generate UUID', () => {
+		assert(validator.isUUID(utils.generateUUID()));
+	});
 
 	it('should shallow merge two objects', (done) => {
 		const a = { foo: 1, cat1: 'ginger' };
@@ -488,5 +500,78 @@ describe('Utility Methods', () => {
 		assert(result.hasOwnProperty('user1') && result.hasOwnProperty('user2'));
 		assert.strictEqual(result.user1.uid, uid1);
 		assert.strictEqual(result.user2.uid, uid2);
+	});
+
+	describe('debounce/throttle', () => {
+		it('should call function after x milliseconds once', (done) => {
+			let count = 0;
+			const now = Date.now();
+			const fn = utils.debounce(() => {
+				count += 1;
+				assert.strictEqual(count, 1);
+				assert(Date.now() - now > 50);
+			}, 100);
+			fn();
+			fn();
+			setTimeout(() => done(), 200);
+		});
+
+		it('should call function first if immediate=true', (done) => {
+			let count = 0;
+			const now = Date.now();
+			const fn = utils.debounce(() => {
+				count += 1;
+				assert.strictEqual(count, 1);
+				assert(Date.now() - now < 50);
+			}, 100, true);
+			fn();
+			fn();
+			setTimeout(() => done(), 200);
+		});
+
+		it('should call function after x milliseconds once', (done) => {
+			let count = 0;
+			const now = Date.now();
+			const fn = utils.throttle(() => {
+				count += 1;
+				assert.strictEqual(count, 1);
+				assert(Date.now() - now > 50);
+			}, 100);
+			fn();
+			fn();
+			setTimeout(() => done(), 200);
+		});
+
+		it('should call function twice if immediate=true', (done) => {
+			let count = 0;
+			const fn = utils.throttle(() => {
+				count += 1;
+			}, 100, true);
+			fn();
+			fn();
+			setTimeout(() => {
+				assert.strictEqual(count, 2);
+				done();
+			}, 200);
+		});
+	});
+
+	describe('Translator', () => {
+		const shim = require('../src/translator');
+
+		const { Translator } = shim;
+		it('should translate in place', async () => {
+			const translator = Translator.create('en-GB');
+			const el = $(`<div><span id="search" title="[[global:search]]"></span><span id="text">[[global:home]]</span></div>`);
+			await translator.translateInPlace(el.get(0));
+			assert.strictEqual(el.find('#text').text(), 'Home');
+			assert.strictEqual(el.find('#search').attr('title'), 'Search');
+		});
+
+		it('should not error', (done) => {
+			shim.flush();
+			shim.flushNamespace();
+			done();
+		});
 	});
 });

@@ -41,6 +41,7 @@ dashboardController.get = async function (req, res) {
 		lastrestart: lastrestart,
 		showSystemControls: isAdmin,
 		popularSearches: popularSearches,
+		hideAllTime: true,
 	});
 };
 
@@ -128,7 +129,7 @@ async function getStats() {
 	}
 
 	let results = await Promise.all([
-		getStatsFromAnalytics('uniquevisitors', 'uniqueIPCount'),
+		getStatsFromAnalytics('uniquevisitors', ''),
 		getStatsFromAnalytics('logins', 'loginCount'),
 		getStatsForSet('users:joindate', 'userCount'),
 		getStatsForSet('posts:pid', 'postCount'),
@@ -227,6 +228,7 @@ function calculateDeltas(results) {
 }
 
 async function getGlobalField(field) {
+	if (!field) return 0;
 	const count = await db.getObjectField('global', field);
 	return parseInt(count, 10) || 0;
 }
@@ -275,7 +277,7 @@ dashboardController.getLogins = async (req, res) => {
 
 	res.render('admin/dashboard/logins', {
 		set: 'logins',
-		query: req.query,
+		query: _.pick(req.query, ['units', 'until', 'count']),
 		stats,
 		summary,
 		sessions,
@@ -303,7 +305,7 @@ dashboardController.getUsers = async (req, res) => {
 
 	res.render('admin/dashboard/users', {
 		set: 'registrations',
-		query: req.query,
+		query: _.pick(req.query, ['units', 'until', 'count']),
 		stats,
 		summary,
 		users,
@@ -330,7 +332,7 @@ dashboardController.getTopics = async (req, res) => {
 
 	res.render('admin/dashboard/topics', {
 		set: 'topics',
-		query: req.query,
+		query: _.pick(req.query, ['units', 'until', 'count']),
 		stats,
 		summary,
 		topics: topicData,

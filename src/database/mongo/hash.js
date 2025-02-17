@@ -174,11 +174,12 @@ module.exports = function (module) {
 		}
 
 		const data = {};
-		fields.forEach((field) => {
+		fields = fields.map((field) => {
 			field = helpers.fieldToString(field);
 			if (field) {
 				data[field] = 1;
 			}
+			return field;
 		});
 
 		const item = await module.client.collection('objects').findOne({ _key: key }, { projection: data });
@@ -187,21 +188,20 @@ module.exports = function (module) {
 	};
 
 	module.deleteObjectField = async function (key, field) {
-		await module.deleteObjectFields(key, [field]);
+		await module.deleteObjectFields(key, Array.isArray(field) ? field : [field]);
 	};
 
 	module.deleteObjectFields = async function (key, fields) {
 		if (!key || (Array.isArray(key) && !key.length) || !Array.isArray(fields) || !fields.length) {
 			return;
 		}
-		fields = fields.filter(Boolean);
+		fields = fields.map(helpers.fieldToString).filter(Boolean);
 		if (!fields.length) {
 			return;
 		}
 
 		const data = {};
 		fields.forEach((field) => {
-			field = helpers.fieldToString(field);
 			data[field] = '';
 		});
 		if (Array.isArray(key)) {

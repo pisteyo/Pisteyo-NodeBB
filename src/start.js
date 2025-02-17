@@ -39,6 +39,7 @@ start.start = async function () {
 			require('./user').startJobs();
 			require('./plugins').startJobs();
 			require('./topics').scheduled.startJobs();
+			require('./activitypub').startJobs();
 			await db.delete('locks');
 		}
 
@@ -146,6 +147,6 @@ async function shutdown(code) {
 	} catch (err) {
 		winston.error(err.stack);
 
-		return process.exit(code || 0);
+		process.exit(code || 0);
 	}
 }
